@@ -7,7 +7,7 @@
 ![Domain](https://img.shields.io/badge/Domain-Value--Based%20Care-purple)
 ![Dataset](https://img.shields.io/badge/Dataset-Synthetic%20800--Patient%20Panel-lightgrey)
 
-> A risk stratification model and weekly worklist generator that helps primary care physicians manage chronic disease panels proactively — identifying the 15 patients who need attention this week, not the 800 they can't reach.
+A risk stratification model and weekly worklist generator that helps primary care physicians manage chronic disease panels proactively. Identifies the 15 patients who need attention this week, not the hundreds they can't reach.
 
 ---
 
@@ -15,11 +15,11 @@
 
 In a fee-for-service model, physicians respond to sick patients. In a value-based care model, the goal is to find patients *before* they get sick.
 
-The average primary care physician manages a panel of 800–2,500 patients with chronic conditions — diabetes, hypertension, heart failure, COPD. Each patient has their own set of overdue labs, missed screenings, and medication gaps. Without a systematic way to prioritize, the most medically complex and highest-risk patients often go uncontacted until they show up in the emergency room.
+The average primary care physician manages a panel of 800–2,500 patients with a wide range chronic conditions: diabetes, hypertension, heart failure, and/or COPD. Each patient has their own set of overdue labs, missed screenings, and medication gaps. Without a systematic way to prioritize, the most medically complex and highest-risk patients often go uncontacted until they show up in the emergency room.
 
 That ER visit costs $2,200. The proactive phone call costs $45.
 
-Value-based care programs — Medicare Advantage, ACOs, PCMH — reward practices for closing quality gaps and preventing avoidable utilization. The problem isn't knowing what needs to be done. It's knowing who needs it most, this week, with the staff hours available.
+Value-based care programs (Medicare Advantage, ACOs, PCMH) reward practices for closing quality gaps and preventing avoidable utilization. The problem isn't knowing what needs to be done. It's knowing who needs it most, this week, with the staff hours available.
 
 | Metric | Reactive (current) | Proactive (with model) |
 |---|---|---|
@@ -195,9 +195,9 @@ Results are based on a synthetic panel designed to reflect published Medicare Ad
 
 **Connect to real CMS data.** The CMS Medicare Advantage public use files contain plan-level quality metrics and chronic condition prevalence that could be used to calibrate the synthetic panel generator and validate model outputs against real population distributions.
 
-**Add longitudinal tracking.** The current model scores a static panel snapshot. A production version would track each patient's risk score over time, flagging patients whose scores are trending upward — not just those who are currently high-risk.
+**Add longitudinal tracking.** The current model scores a static panel snapshot. A production version would track each patient's risk score over time, flagging patients whose scores are trending upward, not just those who are currently high-risk.
 
-**Build a Streamlit dashboard.** An interactive interface where a care coordinator inputs a patient ID and sees their risk score, top risk drivers, open quality gaps, and a recommended outreach script — all in one screen.
+**Build a Streamlit dashboard.** An interactive interface where a care coordinator inputs a patient ID and sees their risk score, top risk drivers, open quality gaps, and a recommended outreach script all in one screen.
 
 **FHIR R4 integration.** The panel data structure maps cleanly to FHIR Patient, Observation, and Condition resources. A FHIR integration layer would make this deployable against real EHR data without manual data extraction.
 
@@ -216,9 +216,12 @@ Results are based on a synthetic panel designed to reflect published Medicare Ad
 
 ## About the Author
 
-**Hannah Hiltz** — Healthcare AI & Data Science | ER & Behavioral Health Background  
+**Hannah Hiltz** — Healthcare AI & Data Science
+
 [LinkedIn](https://www.linkedin.com/in/hannah-hiltz/) · [GitHub](https://github.com/Hannah-Hiltz)
 
 ---
 
 *This project uses entirely synthetic data. It is not intended for clinical use and does not constitute medical advice.*
+
+

@@ -1,0 +1,16 @@
+rank,patient_id,age,gender,insurance,n_conditions,n_quality_gaps,days_since_pcp_visit,er_visits_12m,hospitalizations_12m,outreach_priority,risk_probability,risk_tier
+1,PT-0065,72,F,Medicare Advantage,4,7,285,0,0,Critical,1.0,Critical
+2,PT-0525,65,F,Dual Eligible,5,8,265,0,1,Critical,1.0,Critical
+3,PT-0578,77,F,Medicare FFS,4,6,202,0,0,High,1.0,Critical
+4,PT-0176,71,M,Medicare Advantage,4,9,205,0,0,High,1.0,Critical
+5,PT-0755,79,M,Medicare Advantage,4,8,350,1,0,High,1.0,Critical
+6,PT-0037,68,M,Medicare Advantage,4,6,219,0,0,High,0.999,Critical
+7,PT-0545,68,F,Dual Eligible,2,5,329,0,0,High,0.999,Critical
+8,PT-0613,71,F,Medicare Advantage,6,7,481,0,1,Critical,0.999,Critical
+9,PT-0539,79,F,Medicare FFS,5,8,417,0,0,Critical,0.999,Critical
+10,PT-0522,81,F,Medicare Advantage,4,5,311,0,0,High,0.999,Critical
+11,PT-0695,65,F,Medicare FFS,2,5,619,0,0,High,0.999,Critical
+12,PT-0655,75,M,Medicare Advantage,5,5,263,1,0,High,0.999,Critical
+13,PT-0235,79,F,Medicare Advantage,3,6,258,0,0,High,0.999,Critical
+14,PT-0210,69,F,Medicare Advantage,4,4,281,0,0,High,0.999,Critical
+15,PT-0437,65,F,Dual Eligible,2,5,224,0,0,High,0.999,Critical

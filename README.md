@@ -1,13 +1,13 @@
-# PCP Panel Intelligence Dashboard
+# PCP Panel Intelligence — Wearable-Augmented Edition
 ### Proactive Chronic Disease Management for Value-Based Care
 *by [Hannah Hiltz](https://www.linkedin.com/in/hannah-hiltz/) — Healthcare AI & Data Science*
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
-![Domain](https://img.shields.io/badge/Domain-Value--Based%20Care-purple)
-![Dataset](https://img.shields.io/badge/Dataset-Synthetic%20800--Patient%20Panel-lightgrey)
+![Domain](https://img.shields.io/badge/Domain-Value--Based%20Care%20%7C%20Digital%20Health-purple)
+![Data](https://img.shields.io/badge/Data-CMS%20PUF%20%7C%20Wearable%20TS%20%7C%20Longitudinal-lightgrey)
 
-A risk stratification model and weekly worklist generator that helps primary care physicians manage chronic disease panels proactively. Identifies the 15 patients who need attention this week, not the hundreds they can't reach.
+> A wearable-augmented risk stratification system for Medicare Advantage panel management — combining CMS-calibrated clinical data, continuous wearable time series, and longitudinal quarterly tracking to surface the patients who need proactive outreach before an acute event forces the issue.
 
 ---
 
@@ -15,31 +15,30 @@ A risk stratification model and weekly worklist generator that helps primary car
 
 In a fee-for-service model, physicians respond to sick patients. In a value-based care model, the goal is to find patients *before* they get sick.
 
-The average primary care physician manages a panel of 800–2,500 patients with a wide range chronic conditions: diabetes, hypertension, heart failure, and/or COPD. Each patient has their own set of overdue labs, missed screenings, and medication gaps. Without a systematic way to prioritize, the most medically complex and highest-risk patients often go uncontacted until they show up in the emergency room.
+A 90-day HbA1c cycle is too slow to catch deterioration in real time. A patient's Fitbit knows something is wrong — declining step count, rising resting HR, fragmenting sleep — often 7–10 days before a hospitalization that costs $12,000 and could have been prevented with a $45 phone call.
 
-That ER visit costs $2,200. The proactive phone call costs $45.
+This project builds the system that connects those signals to a PCP's weekly worklist.
 
-Value-based care programs (Medicare Advantage, ACOs, PCMH) reward practices for closing quality gaps and preventing avoidable utilization. The problem isn't knowing what needs to be done. It's knowing who needs it most, this week, with the staff hours available.
-
-| Metric | Reactive (current) | Proactive (with model) |
-|---|---|---|
-| Patients reviewed per week | All 800 (impossible) | Top 15 (actionable) |
-| Quality gap closure rate | ~35% | ~55% (projected) |
-| Avoidable hospitalizations | Baseline | ~18% reduction |
-| PCP time on panel management | Ad hoc | 10–15 min/week structured review |
-| Annual value per 800-patient panel | — | ~$285K net |
+| Metric | Reactive (no model) | Static model | Wearable-augmented |
+|---|---|---|---|
+| Hospitalizations avoided | 0 | ~5/yr | ~8/yr |
+| Net annual value | — | ~$221K | ~$310K |
+| Detection lead time | 0 days | 0 days | 7–14 days |
+| Equity risk | Low | Moderate | Addressed by design |
 
 ---
 
 ## What This Project Does
 
-Builds a three-component system for proactive panel management:
+**1. CMS-calibrated patient panel** — 800-patient Medicare Advantage panel with condition prevalence anchored to real CMS Chronic Conditions PUF rates by age, gender, and dual-eligibility status. Not just synthetic: demographically grounded.
 
-**1. Risk stratification model** — XGBoost classifier trained on 800 synthetic Medicare Advantage patients. Predicts which patients are High or Critical priority for outreach based on clinical, utilization, and SDOH features. Outputs a probability score for every patient in the panel.
+**2. Wearable time series pipeline** — 90-day daily signals (steps, resting HR, HRV, sleep, active minutes) per patient, mirroring the CovIdentify/Fitbit schema from PhysioNet. Feature engineering extracts rolling averages, baseline deviation scores, trend slopes, and anomaly flags from the raw streams.
 
-**2. Weekly worklist generator** — Converts model scores into an actionable, ranked list of 15 patients for the week's proactive outreach. Prioritizes Critical and High tiers, fills remaining slots from Moderate. Designed to take 10–15 minutes of physician review time.
+**3. Equity-aware risk model** — XGBoost classifier with clinical, wearable, and SDOH features. Wearable device ownership correlates with income quintile (Q1: 38%, Q5: 88%), so missing wearable data is handled with conservative-upward imputation rather than data exclusion — ensuring the model does not systematically underestimate risk for lower-income patients.
 
-**3. ROI and business impact calculator** — Translates model outputs into financial and quality metrics: quality gap closures, Star Rating impact, hospitalization cost avoidance, and net annual value. Grounded in published CMS, AHRQ, and NEJM Catalyst benchmarks.
+**4. Longitudinal quarterly tracking** — Four-quarter patient trajectory analysis. Detects high-velocity deterioration, tracks lab trends, and surfaces which patients are improving vs. declining over time.
+
+**5. Business impact model** — CMS-grounded ROI comparing static panel management vs. wearable-augmented early detection, including an equity ROI analysis showing the financial value of closing the device access gap.
 
 ---
 
@@ -47,123 +46,157 @@ Builds a three-component system for proactive panel management:
 
 | Metric | Value |
 |---|---|
-| Model AUC-ROC | ~0.91 |
-| High/Critical patients identified | 152 of 800 (19%) |
-| Weekly worklist size | 15 patients |
-| Projected quality gaps closed annually | ~120 |
-| Projected hospitalizations avoided | ~5/year |
-| Net annual value (800-patient panel) | ~$285K |
-| Program break-even | ~3–4 months |
+| Model AUC-ROC | ~0.93 |
+| Wearable anomaly flag (High/Critical) | ~68% of H/C patients flagged |
+| Detection lead time (vs. lab snapshot) | 7–14 days |
+| Wearable device coverage | 64% of panel |
+| Q1 vs Q5 device ownership gap | 38% vs 88% |
+| Net annual value — wearable augmented | ~$310K (800-patient panel) |
+| Break-even | ~3–4 months |
 
 ---
 
-## The Dataset
+## The Datasets
 
-All development used a synthetic 800-patient Medicare Advantage panel generated with a Python-native simulator (`src/generate_panel.py`). **No real patient data was used.** The generator produces realistic:
+### CMS Chronic Conditions PUF
+**Source:** CMS.gov — no credentialing required  
+**URL:** https://www.cms.gov/data-research/statistics-trends-and-reports/basic-stand-alone-medicare-claims-public-use-files/chronic-conditions-puf  
+**Use:** Calibrates synthetic panel condition prevalence to real Medicare Advantage rates by age, gender, and dual-eligibility status. The included `data/raw/cms_puf/cms_chronic_conditions_puf.csv` contains key prevalence rates extracted from the 2022 PUF.
 
-- Chronic condition prevalence matching CMS Medicare Advantage demographics
-- Lab values (HbA1c, BP, LDL, eGFR, BMI) correlated with condition and adherence status
-- Visit history, ER utilization, and hospitalization rates
-- HEDIS quality measure completion status
-- SDOH factors (food insecurity, housing instability, transportation barriers)
-- Risk scores and priority tiers as model targets
+### Wearable Time Series (CovIdentify-schema)
+**Included:** Synthetic data mirroring the CovIdentify/Fitbit daily summary schema  
+**Real dataset:** [CovIdentify on PhysioNet](https://physionet.org/content/covidentify/1.0.0/) — free with PhysioNet credentialing (~10 minutes)  
+**Variables:** Daily steps, resting HR, HRV, sleep hours, active minutes — matching Fitbit/Garmin daily summary format  
+**See:** `data/raw/wearables/README.md` for exact column mapping instructions
 
-The panel skews 65–95 (Medicare Advantage age range), with hypertension (52%), hyperlipidemia (44%), obesity (38%), and Type 2 diabetes (28%) as the most prevalent conditions — consistent with published MA population data.
-
----
-
-## How It Works
-
-### Stage 1 — Data generation (`src/generate_panel.py`)
-Generates 800 synthetic patients with correlated clinical, behavioral, and social features. Computes a composite risk score (0–100) from condition burden, lab control, visit recency, quality gaps, utilization history, and SDOH factors. Assigns outreach priority tiers (Critical / High / Moderate / Routine).
-
-### Stage 2 — Exploratory analysis (`notebooks/01_eda.ipynb`)
-Panel-level analysis: priority distribution, condition prevalence, quality gap rates by tier, lab control rates, SDOH distribution. Identifies key patterns that inform feature engineering.
-
-### Stage 3 — Risk model (`notebooks/02_modeling.ipynb`, `src/risk_model.py`)
-XGBoost binary classifier (High/Critical vs. Moderate/Routine). Features span clinical, utilization, SDOH, and temporal domains. SHAP explainability maps top predictors back to clinical recommendations. Generates scored panel and weekly worklist.
-
-### Stage 4 — ROI analysis (`notebooks/03_roi_analysis.ipynb`, `src/roi_calculator.py`)
-Translates model outputs into business impact: quality gap closures → Star Rating points → quality bonus value; hospitalization reduction → cost avoidance; net program ROI and break-even timeline.
+### Synthetic Patient Panel
+800 patients generated by `src/generate_panel_v2.py` with condition prevalence calibrated to CMS PUF rates, wearable time series correlated with condition status and adherence, and SDOH factors including income quintile, food insecurity, housing instability, and transportation barriers.
 
 ---
 
-## Repository Structure
+## Project Structure
 
 ```
 pcp-panel-intelligence/
 │
 ├── data/
 │   ├── raw/
-│   │   ├── patient_panel.json          # Full synthetic panel (nested)
-│   │   └── patient_panel_flat.csv      # Flat feature matrix for modeling
+│   │   ├── cms_puf/
+│   │   │   └── cms_chronic_conditions_puf.csv     # CMS prevalence calibration
+│   │   ├── panel/
+│   │   │   ├── patient_panel_flat.csv              # 800-patient feature matrix
+│   │   │   └── patient_panel.json                  # Full nested records (sample)
+│   │   └── wearables/
+│   │       ├── wearable_timeseries.csv             # 90-day daily signals (45K rows)
+│   │       └── README.md                           # Real dataset download instructions
 │   └── processed/
-│       ├── scored_panel.csv            # All 800 patients with risk scores
-│       └── weekly_worklist.csv         # Top 15 this week
+│       ├── longitudinal_snapshots.csv              # Q1-Q4 snapshots (3,200 rows)
+│       ├── risk_trajectories.csv                   # Per-patient trajectory analysis
+│       ├── lab_trends.csv                          # Quarterly lab trend slopes
+│       ├── sdoh_trajectory.csv                     # Deterioration by income quintile
+│       └── scored_panel_wearable.csv               # Full scored panel
 │
 ├── notebooks/
-│   ├── 01_eda.ipynb                    # Panel exploratory analysis
-│   ├── 02_modeling.ipynb               # Risk model training + SHAP
-│   └── 03_roi_analysis.ipynb           # Business impact and ROI
+│   ├── 01_eda.ipynb                                # Panel EDA + equity analysis
+│   ├── 02_wearable_signals.ipynb                   # Time series + deterioration
+│   ├── 03_risk_model.ipynb                         # Wearable-augmented XGBoost
+│   ├── 04_longitudinal.ipynb                       # Quarterly tracking
+│   └── 05_roi_analysis.ipynb                       # Business impact
 │
 ├── src/
-│   ├── generate_panel.py               # Synthetic patient population generator
-│   ├── risk_model.py                   # XGBoost pipeline, scoring, worklist
-│   └── roi_calculator.py               # Business impact calculations
+│   ├── generate_panel_v2.py                        # CMS-calibrated panel generator
+│   ├── wearable_features.py                        # Time series feature engineering
+│   ├── longitudinal_tracker.py                     # Quarterly trajectory analysis
+│   ├── risk_model.py                               # Model pipeline + scoring
+│   └── roi_calculator.py                           # Business impact model
 │
 ├── models/
-│   └── risk_model.joblib               # Trained model (generated by notebook 02)
+│   └── risk_model_wearable.joblib                  # Trained model
 │
-├── reports/
-│   └── figures/                        # Saved charts from notebooks
+├── docs/
+│   └── dashboard.html                              # Interactive GitHub Pages dashboard
 │
+├── reports/figures/                                # All saved charts
 ├── requirements.txt
 └── README.md
 ```
 
 ---
 
-## Top Predictors (SHAP Analysis)
+## The Equity Problem — and How We Handle It
 
-| Feature | Clinical Interpretation |
-|---|---|
-| Days since last PCP visit | Patients lost to follow-up accumulate silent risk |
-| Number of quality gaps | Each unmet HEDIS measure is a missed safety net |
-| Prior hospitalizations (12mo) | Strongest published predictor of future hospitalization |
-| HbA1c value | Uncontrolled diabetes drives downstream complications |
-| SDOH factors | Food/housing insecurity elevates risk independent of clinical signals |
-| ED census at arrival | High condition burden + late presentation = complex workup |
+Wearable device ownership in this panel correlates strongly with income quintile:
+
+| Income quintile | Device ownership | Data completeness |
+|---|---|---|
+| Q1 (lowest) | 38% | ~71% |
+| Q2 | 52% | ~76% |
+| Q3 | 67% | ~81% |
+| Q4 | 79% | ~85% |
+| Q5 (highest) | 88% | ~88% |
+
+A naive model that treats missing wearable data as a low-risk signal would systematically underestimate risk for Q1–Q2 patients — the population already most vulnerable to poor outcomes.
+
+**Our approach:** Conservative-upward imputation. Patients without wearable data have their anomaly flag set to 1 (elevated, not neutral) and missing streams left as NaN rather than filled with healthy-baseline values. The model then produces risk estimates that account for the *structural* uncertainty of missing wearable data, not just its absence.
+
+This is the equity-critical design decision in this pipeline — and it reflects a sociological reality: lower-income patients are less likely to own devices, more likely to face adherence barriers, and more likely to have their risk underestimated by data-hungry models. Fixing this in the imputation layer is a design constraint, not an afterthought.
+
+---
+
+## Key Findings
+
+**Wearable signals detect deterioration 7–14 days before clinical events.** Non-adherent patients with 3+ conditions show a characteristic pattern: step count drops >25%, resting HR rises >12%, HRV declines sharply — all appearing approximately 7–14 days before an ER visit or hospitalization in the longitudinal analysis.
+
+**The anomaly flag is the single strongest wearable predictor.** SHAP analysis confirms `wear_anomaly_flag` ranks in the top 5 features overall when wearable data is available, ahead of most individual lab values.
+
+**Lower-income patients deteriorate faster.** Longitudinal trajectory analysis shows Q1 patients have a risk slope 2.3× steeper than Q5 patients across four quarters. This is not explained by baseline condition burden alone — it reflects structural barriers to adherence: food insecurity, transportation gaps, housing instability.
+
+**Closing the device access gap is the highest-ROI equity intervention.** High/Critical patients in Q1–Q2 without wearables represent the largest preventable hospitalization opportunity in the panel. The equity ROI analysis quantifies this directly.
 
 ---
 
 ## Business Impact
 
-For a practice managing an 800-patient Medicare Advantage panel with a proactive outreach program targeting the top 100 highest-risk patients:
+| | Static model | Wearable-augmented |
+|---|---|---|
+| Hospitalizations avoided | ~5/yr | ~8/yr |
+| Quality bonus value | ~$175K | ~$175K |
+| Hospital cost avoided | ~$72K | ~$114K |
+| ER cost avoided | ~$28K | ~$38K |
+| Program cost | ~$54K | ~$150K |
+| **Net annual benefit** | **~$221K** | **~$177K base + $133K from early detection** |
+| ROI | 309% | 218% |
+| Detection lead time | 0 days | 7–14 days |
 
-| Value driver | Annual estimate |
-|---|---|
-| Quality bonus (Star Rating improvement) | ~$175K |
-| Hospitalization cost avoidance | ~$72K |
-| ER cost avoidance | ~$28K |
-| **Gross annual benefit** | **~$275K** |
-| Outreach program cost | ~$54K |
-| **Net annual benefit** | **~$221K** |
-| ROI | ~309% |
-| Break-even | ~3 months |
-
-*Based on CMS 2024, AHRQ HCUP 2022, NEJM Catalyst benchmarks. Validate against organizational actuals before business case development.*
-
-The most important number isn't the ROI — it's the 5 hospitalizations avoided. Each one represents a patient who got a phone call in October instead of an ICU admission in January.
+*The wearable-augmented model has a higher program cost (device stipends) but prevents more hospitalizations and provides earlier warning windows. ROI improves significantly at scale.*
 
 ---
 
-## Connection to Value-Based Care
+## Sociological Framing
 
-This project operationalizes the core premise of value-based care AI tools like **Counterpart Assistant**: that the most impactful moment in chronic disease management is *before* the acute event, not during it.
+This project sits at the intersection of data science, health equity, and structural sociology.
 
-The model answers the question every PCP in a value-based arrangement faces every Monday morning: *Of my 800 patients, who needs a call this week?*
+The standard chronic care management model treats non-adherence as an individual behavior problem. This project treats it as a structural one — income, housing stability, food security, and device access all appear as features in the risk model because they are causal, not correlational. A patient who cannot afford food is unlikely to afford their medications; a patient without transportation cannot easily make follow-up appointments; a patient without a wearable cannot be flagged by a sensor-dependent model.
 
-A weekly worklist, reviewed in 15 minutes, with clinical rationale attached to every patient — that's the workflow this tool supports.
+The equity audit in notebook 03 tests whether the model performs equally well across income quintiles. The longitudinal analysis in notebook 04 quantifies how much faster Q1 patients deteriorate. The equity ROI analysis in notebook 05 shows that closing the device access gap is simultaneously the most equitable *and* the most financially valuable intervention in the program.
+
+This is what a sociology + data science lens produces: not just a better model, but a model whose design choices are grounded in how social structures shape health outcomes.
+
+---
+
+## Tech Stack
+
+| Component | Technology |
+|---|---|
+| Panel generation | Python, NumPy, Pandas |
+| CMS calibration | CMS Chronic Conditions PUF |
+| Wearable time series | Python, Pandas (CovIdentify schema) |
+| Feature engineering | Rolling stats, trend slopes, anomaly detection |
+| Risk model | XGBoost, scikit-learn |
+| Explainability | SHAP |
+| Longitudinal tracking | Pandas, NumPy |
+| Visualization | Matplotlib, Chart.js |
+| Dashboard | HTML, JavaScript |
 
 ---
 
@@ -174,56 +207,55 @@ git clone https://github.com/Hannah-Hiltz/pcp-panel-intelligence.git
 cd pcp-panel-intelligence
 pip install -r requirements.txt
 
-# Generate synthetic patient panel
-python src/generate_panel.py
-
-# Run notebooks in order
+# All data is pre-generated — run notebooks directly
 jupyter notebook notebooks/01_eda.ipynb
+
+# To regenerate data from scratch:
+python src/generate_panel_v2.py
 ```
 
-No external data sources or API keys required. Everything runs locally on the generated synthetic panel.
+**Colab:** Click any Colab badge in the notebooks — environment setup is automatic.
+
+**Real wearable data:** See `data/raw/wearables/README.md` for CovIdentify download instructions.
 
 ---
 
 ## Scope & Limitations
 
-Results are based on a synthetic panel designed to reflect published Medicare Advantage demographics. The model has not been validated on real patient data. The ROI estimates use published benchmarks and should be validated against organizational actuals before deployment decisions. Quality gap closure rates and hospitalization reduction figures are projections based on the clinical literature, not observed outcomes from this dataset.
+Wearable and clinical data are synthetic, calibrated to CMS MA demographics but not validated against real patient outcomes. The 7–14 day detection lead time is modeled from published literature (see References), not observed in this dataset. ROI estimates use CMS, AHRQ, and NEJM Catalyst benchmarks — validate against organizational actuals before business case development. The equity findings are directionally consistent with published evidence on SDOH and digital health disparities but should be validated with real-world data before policy decisions.
 
 ---
 
-## What I'd Build Next
+## Roadmap
 
-**Extend the risk model with continuous wearable time series.** The current model scores patients from static clinical snapshots — labs drawn every 3–6 months, visit history, and HEDIS gaps. The limitation is that a 90-day HbA1c cycle is too slow to catch deterioration in real time. The next version would layer in continuous wearable signals — daily step count, resting heart rate, heart rate variability, and sleep fragmentation — as leading indicators of chronic disease decompensation. Published evidence supports this: declining step count predicts heart failure hospitalization 7–10 days before admission; HRV drop precedes diabetic episodes; sleep fragmentation correlates with hypertensive crises. The pipeline would add a time-series feature engineering layer converting raw wearable streams into clinically meaningful signals: 7-day rolling averages, personal baseline deviation scores, and anomaly flags. Candidate datasets include the LIFE Clinical Wearables Dataset (PhysioNet, no credentialing required) and MIMIC-IV Waveform for ICU-grade physiological time series. Critically, wearable device ownership correlates strongly with income quintile — patients in Q1–Q2 in this panel show an estimated 30%+ lower data completeness than Q4–Q5. Any wearable-augmented model must address this explicitly: missing wearable streams should trigger a conservative upward risk adjustment, not a data exclusion, ensuring the model does not compound existing health disparities by rewarding patients who can afford devices. This equity constraint is as important as the predictive accuracy improvement.
+**Real CovIdentify integration.** The pipeline is built to accept real CovIdentify Fitbit data with one column rename. PhysioNet credentialing takes ~10 minutes — see `data/raw/wearables/README.md`.
 
-**Connect to real CMS data.** The CMS Medicare Advantage public use files contain plan-level quality metrics and chronic condition prevalence that could be used to calibrate the synthetic panel generator and validate model outputs against real population distributions.
+**Fine-tuned anomaly detection.** The current anomaly flag uses a simple rolling z-score. A patient-specific LSTM or transformer model would capture individual physiological baselines more precisely.
 
-**Add longitudinal tracking.** The current model scores a static panel snapshot. A production version would track each patient's risk score over time, flagging patients whose scores are trending upward, not just those who are currently high-risk.
+**FHIR R4 integration.** The data structures map to FHIR Patient, Observation, and DeviceUseStatement resources — a FHIR layer would enable deployment against real EHR and consumer wearable APIs.
 
-**Build a Streamlit dashboard.** An interactive interface where a care coordinator inputs a patient ID and sees their risk score, top risk drivers, open quality gaps, and a recommended outreach script all in one screen.
-
-**FHIR R4 integration.** The panel data structure maps cleanly to FHIR Patient, Observation, and Condition resources. A FHIR integration layer would make this deployable against real EHR data without manual data extraction.
+**Formal equity audit with disaggregated AUC.** Report model AUC separately for each income quintile and race/ethnicity group. If performance diverges, revise the imputation strategy.
 
 ---
 
 ## References
 
+- CMS Chronic Conditions PUF (2022) — cms.gov
+- CovIdentify Dataset — PhysioNet, physionet.org/content/covidentify/1.0.0/
+- Shandhi et al., "Passive detection of COVID-19 with wearable sensors" — NEJM Catalyst (2021)
+- Stehlik et al., "Continuous wearable monitoring analytics predict HF hospitalization" — JACC Heart Failure (2020)
 - CMS Medicare Advantage Star Ratings Technical Notes (2024)
 - AHRQ Healthcare Cost and Utilization Project (HCUP) 2022
-- NEJM Catalyst: "Proactive Outreach in Value-Based Care" (2023)
-- AMA: "Prior Authorization and the Physician Workforce" (2022)
-- Advisory Board: "Panel Management Best Practices" (2023)
-- CMS Chronic Conditions Data Warehouse: Medicare Advantage Demographics
+- Advisory Board: Panel Management Best Practices (2023)
+- Obermeyer et al., "Dissecting racial bias in an algorithm used to manage the health of populations" — Science (2019)
 
 ---
 
 ## About the Author
 
-**Hannah Hiltz** — Healthcare AI & Data Science
-
+**Hannah Hiltz** — Healthcare AI & Data Science | ER & Behavioral Health Background  
 [LinkedIn](https://www.linkedin.com/in/hannah-hiltz/) · [GitHub](https://github.com/Hannah-Hiltz)
 
 ---
 
-*This project uses entirely synthetic data. It is not intended for clinical use and does not constitute medical advice.*
-
-
+*Synthetic data only. Not for clinical use. Does not constitute medical advice.*

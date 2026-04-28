@@ -4,9 +4,9 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
-![Status](https://img.shields.io/badge/v1.0-Updates%20Coming!-lightgreen)
+![Status](https://img.shields.io/badge/v2.0-New%20and%20Improved-lightgreen)
 ![Domain](https://img.shields.io/badge/Domain-Value--Based%20Care%20%7C%20Digital%20Health-purple)
-![Data](https://img.shields.io/badge/Data-CMS%20PUF%20%7C%20Wearable%20TS%20%7C%20Longitudinal-yellow)
+![Data](https://img.shields.io/badge/Data-CMS%20PUF%20%7C%20Wearable%20TS%20%7C%20Longitudinal-orange)
 
 A wearable-augmented risk stratification system for Medicare Advantage panel management — combining CMS-calibrated clinical data, continuous wearable time series, and longitudinal quarterly tracking to surface the patients who need proactive outreach before an acute event forces the issue.
 

@@ -1,13 +1,16 @@
-# PCP Panel Intelligence — Wearable-Augmented Edition
+# PCP Panel Intelligence (Wearable-Augmented Edition)
 ### Proactive Chronic Disease Management for Value-Based Care
 *by [Hannah Hiltz](https://www.linkedin.com/in/hannah-hiltz/) — Healthcare AI & Data Science*
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
+![Status](https://img.shields.io/badge/v1.0-Updates%20Coming!-lightgreen)
 ![Domain](https://img.shields.io/badge/Domain-Value--Based%20Care%20%7C%20Digital%20Health-purple)
-![Data](https://img.shields.io/badge/Data-CMS%20PUF%20%7C%20Wearable%20TS%20%7C%20Longitudinal-lightgrey)
+![Data](https://img.shields.io/badge/Data-CMS%20PUF%20%7C%20Wearable%20TS%20%7C%20Longitudinal-yellow)
 
-> A wearable-augmented risk stratification system for Medicare Advantage panel management — combining CMS-calibrated clinical data, continuous wearable time series, and longitudinal quarterly tracking to surface the patients who need proactive outreach before an acute event forces the issue.
+A wearable-augmented risk stratification system for Medicare Advantage panel management — combining CMS-calibrated clinical data, continuous wearable time series, and longitudinal quarterly tracking to surface the patients who need proactive outreach before an acute event forces the issue.
+
+[![Live Dashboard - V1 vs. V2](https://img.shields.io/badge/▶_Live_Demo-V1_vs_V2_Evolution-639922?style=for-the-badge)](https://hannah-hiltz.github.io/pcp-panel-intelligence/pcp-panel-evolution.html)
 
 ---
 
@@ -15,7 +18,7 @@
 
 In a fee-for-service model, physicians respond to sick patients. In a value-based care model, the goal is to find patients *before* they get sick.
 
-A 90-day HbA1c cycle is too slow to catch deterioration in real time. A patient's Fitbit knows something is wrong — declining step count, rising resting HR, fragmenting sleep — often 7–10 days before a hospitalization that costs $12,000 and could have been prevented with a $45 phone call.
+Many lab values. and even vitals, are not regularly or reliably tracked between visits. A 90-day HbA1c cycle, for example, is too slow to catch deterioration in real time. But a patient's wearable device may know something is wrong (declining step count, rising resting HR, inconsistent or inadequate sleep) often 7–10 days before a hospitalization that costs $12,000 and could have been prevented with a $45 phone call.
 
 This project builds the system that connects those signals to a PCP's weekly worklist.
 
@@ -32,9 +35,9 @@ This project builds the system that connects those signals to a PCP's weekly wor
 
 **1. CMS-calibrated patient panel** — 800-patient Medicare Advantage panel with condition prevalence anchored to real CMS Chronic Conditions PUF rates by age, gender, and dual-eligibility status. Not just synthetic: demographically grounded.
 
-**2. Wearable time series pipeline** — 90-day daily signals (steps, resting HR, HRV, sleep, active minutes) per patient, mirroring the CovIdentify/Fitbit schema from PhysioNet. Feature engineering extracts rolling averages, baseline deviation scores, trend slopes, and anomaly flags from the raw streams.
+**2. Wearable time series pipeline** — 90-day daily signals (steps, resting HR, HRV, sleep, active minutes) per patient, mirroring schemas found in common wearable devices, from PhysioNet. Feature engineering extracts rolling averages, baseline deviation scores, trend slopes, and anomaly flags from the raw streams.
 
-**3. Equity-aware risk model** — XGBoost classifier with clinical, wearable, and SDOH features. Wearable device ownership correlates with income quintile (Q1: 38%, Q5: 88%), so missing wearable data is handled with conservative-upward imputation rather than data exclusion — ensuring the model does not systematically underestimate risk for lower-income patients.
+**3. Equity-aware risk model** — XGBoost classifier with clinical, wearable, and SDOH features. Wearable device ownership correlates with income quintile (Q1: 38%, Q5: 88%), so missing wearable data is handled with conservative-upward imputation rather than data exclusion. This ensures the model does not systematically underestimate risk for lower-income patients.
 
 **4. Longitudinal quarterly tracking** — Four-quarter patient trajectory analysis. Detects high-velocity deterioration, tracks lab trends, and surfaces which patients are improving vs. declining over time.
 
@@ -137,19 +140,19 @@ Wearable device ownership in this panel correlates strongly with income quintile
 
 A naive model that treats missing wearable data as a low-risk signal would systematically underestimate risk for Q1–Q2 patients — the population already most vulnerable to poor outcomes.
 
-**Our approach:** Conservative-upward imputation. Patients without wearable data have their anomaly flag set to 1 (elevated, not neutral) and missing streams left as NaN rather than filled with healthy-baseline values. The model then produces risk estimates that account for the *structural* uncertainty of missing wearable data, not just its absence.
+**Our approach:** Conservative-upward imputation. Patients without wearable data have their anomaly flag set to 1 (elevated, not neutral) and missing streams left as NaN rather than filled with healthy-baseline values. The model then produces risk estimates that account for the *structural* uncertainty of missing wearable data, rather than just its absence.
 
-This is the equity-critical design decision in this pipeline — and it reflects a sociological reality: lower-income patients are less likely to own devices, more likely to face adherence barriers, and more likely to have their risk underestimated by data-hungry models. Fixing this in the imputation layer is a design constraint, not an afterthought.
+This is the equity-critical design decision in this pipeline and it reflects a sociological reality: lower-income patients are less likely to own devices, more likely to face adherence barriers, and more likely to have their risk underestimated by data-hungry models. Fixing this in the imputation layer is a design constraint, not an afterthought.
 
 ---
 
 ## Key Findings
 
-**Wearable signals detect deterioration 7–14 days before clinical events.** Non-adherent patients with 3+ conditions show a characteristic pattern: step count drops >25%, resting HR rises >12%, HRV declines sharply — all appearing approximately 7–14 days before an ER visit or hospitalization in the longitudinal analysis.
+**Wearable signals detect deterioration 7–14 days before clinical events.** Non-adherent patients with 3+ conditions show a characteristic pattern: step count drops >25%, resting HR rises >12%, HRV declines sharply. Each of these data points appear approximately 7–14 days before an ER visit or hospitalization in the longitudinal analysis.
 
 **The anomaly flag is the single strongest wearable predictor.** SHAP analysis confirms `wear_anomaly_flag` ranks in the top 5 features overall when wearable data is available, ahead of most individual lab values.
 
-**Lower-income patients deteriorate faster.** Longitudinal trajectory analysis shows Q1 patients have a risk slope 2.3× steeper than Q5 patients across four quarters. This is not explained by baseline condition burden alone — it reflects structural barriers to adherence: food insecurity, transportation gaps, housing instability.
+**Lower-income patients deteriorate faster.** Longitudinal trajectory analysis shows Q1 patients have a risk slope 2.3× steeper than Q5 patients across four quarters. This is not explained by baseline condition burden alone. It reflects structural barriers to adherence: food insecurity, transportation gaps, housing instability, among other socioeconomic factors.
 
 **Closing the device access gap is the highest-ROI equity intervention.** High/Critical patients in Q1–Q2 without wearables represent the largest preventable hospitalization opportunity in the panel. The equity ROI analysis quantifies this directly.
 
@@ -176,7 +179,7 @@ This is the equity-critical design decision in this pipeline — and it reflects
 
 This project sits at the intersection of data science, health equity, and structural sociology.
 
-The standard chronic care management model treats non-adherence as an individual behavior problem. This project treats it as a structural one — income, housing stability, food security, and device access all appear as features in the risk model because they are causal, not correlational. A patient who cannot afford food is unlikely to afford their medications; a patient without transportation cannot easily make follow-up appointments; a patient without a wearable cannot be flagged by a sensor-dependent model.
+The standard chronic care management model treats non-adherence as an individual behavior problem. This project treats it as a structural one. Income, housing stability, food security, and device access all appear as features in the risk model because they are causal, not correlational. A patient who cannot afford food is unlikely to afford their medications; a patient without transportation cannot easily make follow-up appointments; a patient without a wearable cannot be flagged by a sensor-dependent model.
 
 The equity audit in notebook 03 tests whether the model performs equally well across income quintiles. The longitudinal analysis in notebook 04 quantifies how much faster Q1 patients deteriorate. The equity ROI analysis in notebook 05 shows that closing the device access gap is simultaneously the most equitable *and* the most financially valuable intervention in the program.
 
@@ -238,6 +241,28 @@ Wearable and clinical data are synthetic, calibrated to CMS MA demographics but 
 
 ---
 
+## Changelog
+
+**v2.0** *(April 2025)* — Wearable-augmented model. Added 90-day continuous wearable time series (CovIdentify/Fitbit schema), CMS Chronic Conditions PUF calibration, longitudinal quarterly tracking, equity-aware imputation, and comparative ROI analysis. New notebooks: wearable signals, longitudinal tracking. New src modules: `wearable_features.py`, `longitudinal_tracker.py`, `generate_panel_v2.py`.
+
+**v1.0** *(March 2025)* — Initial release. Static XGBoost risk stratification model on 800-patient synthetic Medicare Advantage panel. Clinical features, HEDIS quality gaps, SDOH factors, weekly worklist generator, ROI calculator.
+
+---
+
+## What's next
+
+**Real wearable data.** The pipeline is built to accept real CovIdentify Fitbit data with one column rename — PhysioNet credentialing takes ~10 minutes. Swapping in real data is the single highest-value next step for validating the detection lead time findings against actual patient outcomes rather than modeled ones.
+
+**Fine-tuned anomaly detection.** The current anomaly flag uses a rolling z-score threshold. A patient-specific LSTM or lightweight transformer would capture individual physiological baselines more precisely — a patient whose resting HR is naturally 80 looks different from one whose baseline is 58, and the model should treat them differently.
+
+**FHIR R4 integration.** The CMS Prior Authorization Final Rule (CMS-0057-F) requires payers to implement real-time PA APIs via HL7 FHIR R4 by 2026. The panel data structures map cleanly to FHIR Patient, Observation, and DeviceUseStatement resources — a FHIR layer would make this deployable against real EHR and consumer wearable APIs without manual data extraction.
+
+**Formal equity audit.** Disaggregated AUC reporting by income quintile and race/ethnicity. If the wearable layer improves prediction for Q4–Q5 patients but not Q1–Q2 — which the missing-data pattern suggests is a real risk — that finding needs to be documented and the imputation strategy revised accordingly.
+
+**Panel expansion to 2,500 patients.** A typical PCP panel in a large health system runs 1,500–2,500 patients. Scaling the generator and re-validating the worklist ranking at that size would test whether the current feature engineering holds up under realistic panel conditions.
+
+---
+
 ## References
 
 - CMS Chronic Conditions PUF (2022) — cms.gov
@@ -253,7 +278,7 @@ Wearable and clinical data are synthetic, calibrated to CMS MA demographics but 
 
 ## About the Author
 
-**Hannah Hiltz** — Healthcare AI & Data Science | ER & Behavioral Health Background  
+**Hannah Hiltz** — Healthcare AI & Data Science 
 [LinkedIn](https://www.linkedin.com/in/hannah-hiltz/) · [GitHub](https://github.com/Hannah-Hiltz)
 
 ---

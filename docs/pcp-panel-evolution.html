@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PCP Panel Intelligence — Model Evolution Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --font:'DM Sans',system-ui,sans-serif;
+  --bg:#ffffff;--surface:#f7f7f5;--border:rgba(0,0,0,0.09);--border-md:rgba(0,0,0,0.14);
+  --text:#111110;--text-2:#6b6b68;--text-3:#9a9a96;
+  --r-sm:6px;--r-md:8px;--r-lg:12px;
+  --green-bg:#eaf3de;--green:#3b6d11;--green-s:#639922;
+  --amber-bg:#faeeda;--amber:#854f0b;
+  --red-bg:#fcebeb;--red:#a32d2d;
+  --blue-bg:#e6f1fb;--blue:#185fa5;--blue-s:#378add;
+}
+html{font-size:16px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+
+nav{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:20}
+.nav-brand{display:flex;align-items:center;gap:10px}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--blue-s)}
+.nav-title{font-size:14px;font-weight:500}
+.nav-sub{font-size:12px;color:var(--text-3);margin-left:6px}
+.nav-links{display:flex;gap:4px}
+.nav-link{font-size:13px;color:var(--text-2);text-decoration:none;padding:6px 12px;border-radius:var(--r-sm);transition:background .15s}
+.nav-link:hover{background:var(--surface);color:var(--text)}
+
+.page{max-width:1100px;margin:0 auto;padding:2.5rem 2rem 5rem}
+
+.hero{margin-bottom:2rem}
+.hero h1{font-size:24px;font-weight:500;margin-bottom:6px}
+.hero p{font-size:14px;color:var(--text-2);max-width:580px;line-height:1.7}
+.badges{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.badge{font-size:11px;font-weight:500;padding:3px 10px;border-radius:99px;border:0.5px solid var(--border-md);color:var(--text-2)}
+
+.era-switch{display:flex;gap:0;margin-bottom:1.5rem;border:0.5px solid var(--border);border-radius:var(--r-lg);overflow:hidden;width:fit-content}
+.era-btn{font-family:var(--font);font-size:13px;font-weight:400;padding:9px 22px;border:none;cursor:pointer;background:transparent;color:var(--text-2);transition:all .15s;display:flex;align-items:center;gap:8px}
+.era-btn.active{background:var(--surface);color:var(--text);font-weight:500}
+.era-divider{width:0.5px;background:var(--border)}
+.era-pill{font-size:10px;font-weight:500;padding:2px 8px;border-radius:99px}
+.pill-v1{background:var(--blue-bg);color:var(--blue)}
+.pill-v2{background:var(--green-bg);color:var(--green)}
+
+.new-tag{font-size:10px;font-weight:500;padding:1px 7px;border-radius:99px;background:var(--green-bg);color:var(--green);margin-left:5px;vertical-align:middle}
+
+.sub-nav{display:flex;gap:2px;border-bottom:0.5px solid var(--border);margin-bottom:2rem}
+.sub-btn{font-family:var(--font);font-size:13px;font-weight:400;color:var(--text-2);background:transparent;border:none;border-bottom:2px solid transparent;padding:10px 16px;cursor:pointer;margin-bottom:-0.5px;transition:color .15s}
+.sub-btn:hover{color:var(--text)}
+.sub-btn.active{color:var(--text);font-weight:500;border-bottom-color:var(--text)}
+
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.75rem}
+@media(max-width:700px){.metrics{grid-template-columns:1fr 1fr}}
+.metric{background:var(--surface);border-radius:var(--r-md);padding:16px 18px}
+.metric .ml{font-size:11px;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:7px}
+.metric .mv{font-size:26px;font-weight:500;font-variant-numeric:tabular-nums}
+.metric .ma{font-size:12px;font-weight:500;margin-top:5px}
+.metric .md{font-size:11px;color:var(--text-3);margin-top:2px}
+
+.callout{padding:12px 18px;border-radius:var(--r-md);font-size:13px;line-height:1.6;margin-bottom:1.75rem}
+.callout-blue{background:var(--blue-bg);color:var(--blue)}
+.callout-green{background:var(--green-bg);color:var(--green)}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:700px){.g2{grid-template-columns:1fr}}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r-lg);padding:1.25rem}
+.card h3{font-size:13px;font-weight:500;margin-bottom:3px}
+.card .cs{font-size:11px;color:var(--text-3);margin-bottom:12px}
+
+.leg{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.leg span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2)}
+.lb{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+.view{display:none}
+.view.active{display:block}
+
+.wl-grid{display:grid;grid-template-columns:30px 1fr 80px 50px 65px 110px 85px;gap:8px;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border);font-size:12px}
+.wl-grid:last-child{border-bottom:none}
+.wl-head{font-size:11px;color:var(--text-3);font-weight:500;border-bottom-color:var(--border-md) !important}
+.wl-num{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500}
+.tp{font-size:10px;font-weight:500;padding:2px 9px;border-radius:99px;display:inline-block}
+.tC{background:var(--red-bg);color:var(--red)}
+.tH{background:var(--amber-bg);color:var(--amber)}
+.rb{background:var(--surface);border-radius:3px;height:5px}
+.rf{height:5px;border-radius:3px}
+.anom{font-size:10px;font-weight:500;background:var(--amber-bg);color:var(--amber);padding:1px 6px;border-radius:4px;margin-left:4px}
+
+.roi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem}
+@media(max-width:700px){.roi-grid{grid-template-columns:1fr 1fr}}
+.rc{background:var(--surface);border-radius:var(--r-md);padding:16px 18px}
+.rc .rl{font-size:11px;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.rc .rv{font-size:22px;font-weight:500}
+.rc .rs{font-size:11px;color:var(--text-3);margin-top:3px}
+
+.eq-row{display:grid;grid-template-columns:90px 1fr 55px 55px;gap:8px;align-items:center;font-size:12px;padding:7px 0;border-bottom:0.5px solid var(--border)}
+.eq-row:last-child{border-bottom:none}
+.eq-track{background:var(--surface);border-radius:3px;height:6px}
+.eq-fill{height:6px;border-radius:3px}
+
+.footnote{font-size:11px;color:var(--text-3);margin-top:1rem;line-height:1.6}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-dot"></div>
+    <span class="nav-title">PCP Panel Intelligence</span>
+    <span class="nav-sub">by Hannah Hiltz</span>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="https://github.com/Hannah-Hiltz/pcp-panel-intelligence" target="_blank">GitHub</a>
+    <a class="nav-link" href="https://www.linkedin.com/in/hannah-hiltz/" target="_blank">LinkedIn</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="hero">
+    <h1>Model evolution — static to wearable-augmented</h1>
+    <p>Toggle between the original clinical snapshot model and the wearable-augmented version with continuous time series, longitudinal tracking, and equity-aware imputation.</p>
+    <div class="badges">
+      <span class="badge">800-patient synthetic panel</span>
+      <span class="badge">CMS-calibrated prevalence</span>
+      <span class="badge">CovIdentify wearable schema</span>
+      <span class="badge">XGBoost · SHAP</span>
+      <span class="badge">Medicare Advantage · Value-based care</span>
+    </div>
+  </div>
+
+  <div class="era-switch">
+    <button class="era-btn active" id="btn-v1" onclick="setEra('v1')">
+      Static model <span class="era-pill pill-v1">v1</span>
+    </button>
+    <div class="era-divider"></div>
+    <button class="era-btn" id="btn-v2" onclick="setEra('v2')">
+      Wearable-augmented <span class="era-pill pill-v2">v2</span>
+    </button>
+  </div>
+
+  <!-- ── V1 ── -->
+  <div id="era-v1">
+    <div class="sub-nav">
+      <button class="sub-btn active" onclick="setSub('v1','overview',this)">Panel overview</button>
+      <button class="sub-btn" onclick="setSub('v1','worklist',this)">Weekly worklist</button>
+      <button class="sub-btn" onclick="setSub('v1','roi',this)">Business impact</button>
+    </div>
+
+    <div id="v1-overview" class="view active">
+      <div class="callout callout-blue">Static snapshot model — clinical data only. Condition flags, lab values, visit history, HEDIS gaps. No continuous signal between visits. Detection lead time: 0 days.</div>
+      <div class="metrics">
+        <div class="metric"><div class="ml">Quality gaps (panel)</div><div class="mv" id="v1-m1">—</div><div class="ma" style="color:var(--green)" id="v1-m1a"></div><div class="md" id="v1-m1d"></div></div>
+        <div class="metric"><div class="ml">HbA1c controlled</div><div class="mv" id="v1-m2">—</div><div class="ma" style="color:var(--green)" id="v1-m2a"></div><div class="md" id="v1-m2d"></div></div>
+        <div class="metric"><div class="ml">Hospitalizations/yr</div><div class="mv" id="v1-m3">—</div><div class="ma" style="color:var(--green)" id="v1-m3a"></div><div class="md" id="v1-m3d"></div></div>
+        <div class="metric"><div class="ml">Detection lead time</div><div class="mv" style="color:var(--red)">0 d</div><div class="ma" style="color:var(--red)">No early signal</div><div class="md">Lab cycle only</div></div>
+      </div>
+      <div class="g2">
+        <div class="card"><h3>Priority distribution — before vs. after</h3><div class="cs">Patient counts by outreach tier</div>
+          <div class="leg"><span><span class="lb" style="background:#E24B4A"></span>Critical</span><span><span class="lb" style="background:#EF9F27"></span>High</span><span><span class="lb" style="background:#97C459"></span>Moderate</span><span><span class="lb" style="background:#5DCAA5"></span>Routine</span></div>
+          <div style="position:relative;width:100%;height:190px"><canvas id="c-v1-pri" role="img" aria-label="Priority distribution before and after outreach intervention.">Before: Critical 12, High 140, Moderate 434, Routine 214. After: Critical 3, High 48, Moderate 310, Routine 439.</canvas></div>
+        </div>
+        <div class="card"><h3>Lab control rates</h3><div class="cs">% patients with controlled values</div>
+          <div class="leg"><span><span class="lb" style="background:#85B7EB"></span>Before</span><span><span class="lb" style="background:#378ADD"></span>After</span></div>
+          <div style="position:relative;width:100%;height:190px"><canvas id="c-v1-labs" role="img" aria-label="Lab control rates before and after. HbA1c 58 to 74, BP 61 to 78, LDL 54 to 70.">HbA1c 58→74%, BP 61→78%, LDL 54→70%.</canvas></div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card"><h3>Quality gap closure by measure</h3><div class="cs">Gaps closed per 100 outreached patients</div>
+          <div style="position:relative;width:100%;height:220px"><canvas id="c-v1-gaps" role="img" aria-label="Gap closure by measure. Annual wellness 38, HbA1c 34, BP 31, eye 28, LDL 26, colorectal 22, flu 19.">Wellness 38, HbA1c 34, BP 31, eye 28, LDL 26, colorectal 22, flu 19.</canvas></div>
+        </div>
+        <div class="card"><h3>ER visits & hospitalizations</h3><div class="cs">Annual panel totals — before vs. after</div>
+          <div class="leg"><span><span class="lb" style="background:#F09595"></span>Before</span><span><span class="lb" style="background:#E24B4A"></span>After</span></div>
+          <div style="position:relative;width:100%;height:220px"><canvas id="c-v1-util" role="img" aria-label="Utilization before and after. ER 85 to 60, hospitalizations 28 to 23.">ER 85→60. Hosp 28→23.</canvas></div>
+        </div>
+      </div>
+      <p class="footnote">All data synthetic. Lab control thresholds: HbA1c &lt;8.0%, SBP &lt;130 mmHg, LDL &lt;100 mg/dL.</p>
+    </div>
+
+    <div id="v1-worklist" class="view">
+      <div class="callout callout-blue">Ranked by clinical risk score only — condition burden, lab values, visit recency, HEDIS gaps. No continuous signal between visits.</div>
+      <div class="card"><h3>Weekly outreach list — static model</h3><div class="cs">Top 15 patients ranked by clinical risk score</div>
+        <div class="wl-grid wl-head"><div>#</div><div>Patient</div><div>Primary dx</div><div>Gaps</div><div>Days out</div><div>Risk score</div><div>Priority</div></div>
+        <div id="v1-wl"></div>
+      </div>
+      <p class="footnote">Days out = days since last PCP visit. Red = &gt;300 days, amber = 150–300.</p>
+    </div>
+
+    <div id="v1-roi" class="view">
+      <div class="callout callout-blue">Static model ROI — quality gap closure and utilization reduction from proactive outreach. No wearable device costs included.</div>
+      <div class="roi-grid">
+        <div class="rc"><div class="rl">Quality bonus</div><div class="rv" style="color:var(--green)">$175K</div><div class="rs">Star rating improvement</div></div>
+        <div class="rc"><div class="rl">Hospital cost avoided</div><div class="rv" style="color:var(--green)">$72K</div><div class="rs">~5 hospitalizations</div></div>
+        <div class="rc"><div class="rl">ER cost avoided</div><div class="rv" style="color:var(--green)">$28K</div><div class="rs">~25 ER visits</div></div>
+        <div class="rc"><div class="rl">Program cost</div><div class="rv" style="color:var(--red)">$54K</div><div class="rs">Outreach only</div></div>
+        <div class="rc"><div class="rl">Net annual benefit</div><div class="rv" style="color:var(--blue)">$221K</div><div class="rs">After program costs</div></div>
+        <div class="rc"><div class="rl">ROI / break-even</div><div class="rv" style="color:var(--green)">309%</div><div class="rs">~3 months</div></div>
+      </div>
+      <div class="card"><h3>Cost waterfall — annual value</h3><div class="cs">Static model</div>
+        <div style="position:relative;width:100%;height:240px"><canvas id="c-v1-roi" role="img" aria-label="Waterfall chart. Quality bonus $175K, hospital savings $72K, ER savings $28K, program cost negative $54K, net $221K.">Quality $175K, hospital $72K, ER $28K, cost -$54K, net $221K.</canvas></div>
+      </div>
+      <p class="footnote">Sources: CMS 2024 Star Ratings, AHRQ HCUP 2022, NEJM Catalyst. Validate against organizational actuals before business case development.</p>
+    </div>
+  </div>
+
+  <!-- ── V2 ── -->
+  <div id="era-v2" style="display:none">
+    <div class="sub-nav">
+      <button class="sub-btn active" onclick="setSub('v2','overview',this)">Panel overview</button>
+      <button class="sub-btn" onclick="setSub('v2','worklist',this)">Weekly worklist</button>
+      <button class="sub-btn" onclick="setSub('v2','wearable',this)">Wearable signals<span class="new-tag">new</span></button>
+      <button class="sub-btn" onclick="setSub('v2','longitudinal',this)">Longitudinal<span class="new-tag">new</span></button>
+      <button class="sub-btn" onclick="setSub('v2','roi',this)">Business impact</button>
+    </div>
+
+    <div id="v2-overview" class="view active">
+      <div class="callout callout-green">Wearable-augmented model — clinical + continuous wearable signals (steps, resting HR, HRV, sleep) + SDOH + CMS-calibrated prevalence. Detection lead time: 7–14 days before clinical event.</div>
+      <div class="metrics">
+        <div class="metric"><div class="ml">Quality gaps (panel)</div><div class="mv" id="v2-m1">—</div><div class="ma" style="color:var(--green)" id="v2-m1a"></div><div class="md" id="v2-m1d"></div></div>
+        <div class="metric"><div class="ml">HbA1c controlled</div><div class="mv" id="v2-m2">—</div><div class="ma" style="color:var(--green)" id="v2-m2a"></div><div class="md" id="v2-m2d"></div></div>
+        <div class="metric"><div class="ml">Hospitalizations/yr</div><div class="mv" id="v2-m3">—</div><div class="ma" style="color:var(--green)" id="v2-m3a"></div><div class="md" id="v2-m3d"></div></div>
+        <div class="metric"><div class="ml">Detection lead time</div><div class="mv" style="color:var(--green)">7–14 d</div><div class="ma" style="color:var(--green)">Wearable early signal</div><div class="md">Before lab cycle</div></div>
+      </div>
+      <div class="g2">
+        <div class="card"><h3>Priority distribution — before vs. after</h3><div class="cs">Wearable-augmented model</div>
+          <div class="leg"><span><span class="lb" style="background:#E24B4A"></span>Critical</span><span><span class="lb" style="background:#EF9F27"></span>High</span><span><span class="lb" style="background:#97C459"></span>Moderate</span><span><span class="lb" style="background:#5DCAA5"></span>Routine</span></div>
+          <div style="position:relative;width:100%;height:190px"><canvas id="c-v2-pri" role="img" aria-label="V2 priority distribution before and after.">Before: Critical 9, High 152, Moderate 523, Routine 116. After: Critical 2, High 41, Moderate 298, Routine 459.</canvas></div>
+        </div>
+        <div class="card"><h3>Wearable coverage — equity analysis</h3><div class="cs">Device ownership by income quintile</div>
+          <div style="position:relative;width:100%;height:190px"><canvas id="c-v2-eq-bar" role="img" aria-label="Wearable ownership by income quintile. Q1:38%, Q2:52%, Q3:67%, Q4:79%, Q5:88%.">Q1:38% Q2:52% Q3:67% Q4:79% Q5:88%.</canvas></div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card"><h3>Lab control rates</h3><div class="cs">% patients with controlled values — wearable model</div>
+          <div class="leg"><span><span class="lb" style="background:#85B7EB"></span>Before</span><span><span class="lb" style="background:#378ADD"></span>After</span></div>
+          <div style="position:relative;width:100%;height:190px"><canvas id="c-v2-labs" role="img" aria-label="V2 lab control rates. HbA1c 58 to 77, BP 61 to 81, LDL 54 to 73.">HbA1c 58→77%, BP 61→81%, LDL 54→73%.</canvas></div>
+        </div>
+        <div class="card"><h3>Utilization — static vs. wearable model after</h3><div class="cs">Wearable early detection advantage</div>
+          <div class="leg"><span><span class="lb" style="background:#F09595"></span>Static model</span><span><span class="lb" style="background:#E24B4A"></span>Wearable model</span></div>
+          <div style="position:relative;width:100%;height:190px"><canvas id="c-v2-util" role="img" aria-label="Utilization comparison. ER: static 60, wearable 51. Hospitalizations: static 23, wearable 19.">ER: static 60 vs wearable 51. Hosp: 23 vs 19.</canvas></div>
+        </div>
+      </div>
+      <p class="footnote">CMS Chronic Conditions PUF calibrated prevalence. Conservative-upward imputation for patients without wearable devices.</p>
+    </div>
+
+    <div id="v2-worklist" class="view">
+      <div class="callout callout-green">Ranked by wearable-augmented risk score. Patients with active wearable anomaly flags — step decline or HR elevation detected in last 7 days — are surfaced earlier than clinical score alone would suggest.</div>
+      <div class="card"><h3>Weekly outreach list — wearable-augmented model</h3><div class="cs">Top 15 patients — amber "alert" badges indicate active wearable anomaly flag</div>
+        <div class="wl-grid wl-head"><div>#</div><div>Patient</div><div>Primary dx</div><div>Gaps</div><div>Days out</div><div>Risk score</div><div>Priority</div></div>
+        <div id="v2-wl"></div>
+      </div>
+      <p class="footnote">PT-0312 and PT-0089 move from positions 6–7 (static) to 4–5 (wearable) because their step decline and HR elevation flagged 8 days before their next scheduled lab draw.</p>
+    </div>
+
+    <div id="v2-wearable" class="view">
+      <div class="callout callout-green">90-day continuous wearable signals per patient, mirroring CovIdentify/Fitbit daily summary schema. Deterioration pattern — declining steps, rising resting HR, dropping HRV — appears 7–14 days before hospitalization.</div>
+      <div class="card"><h3>Daily step count — adherent vs. non-adherent</h3><div class="cs">Mean steps over 90 days — simulated panel</div>
+        <div class="leg"><span><span class="lb" style="background:#378ADD"></span>Adherent</span><span><span class="lb" style="background:#E24B4A"></span>Non-adherent (with deterioration event ~day 60)</span></div>
+        <div style="position:relative;width:100%;height:210px"><canvas id="c-v2-steps" role="img" aria-label="Step count 90 days. Adherent stable around 7800. Non-adherent declining with sharp drop at day 60.">Adherent ~7800 stable. Non-adherent declining, event day 60.</canvas></div>
+      </div>
+      <div class="g2">
+        <div class="card"><h3>HRV trend by priority tier</h3><div class="cs">Mean HRV — 90 days</div>
+          <div class="leg"><span><span class="lb" style="background:#E24B4A"></span>Critical</span><span><span class="lb" style="background:#EF9F27"></span>High</span><span><span class="lb" style="background:#97C459"></span>Moderate</span><span><span class="lb" style="background:#5DCAA5"></span>Routine</span></div>
+          <div style="position:relative;width:100%;height:200px"><canvas id="c-v2-hrv" role="img" aria-label="HRV by priority tier 90 days. Critical lowest declining, Routine highest stable.">Critical lowest declining, Routine highest stable.</canvas></div>
+        </div>
+        <div class="card"><h3>Wearable data completeness — equity view</h3><div class="cs">% days with valid data by income quintile</div>
+          <div id="eq-rows" style="margin-top:8px"></div>
+          <p class="footnote" style="margin-top:10px">Conservative-upward imputation: patients without devices get anomaly_flag=1, not 0 — prevents systematic underestimation of Q1–Q2 risk.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="v2-longitudinal" class="view">
+      <div class="callout callout-green">Quarterly tracking Q1–Q4 surfaces patients whose risk is trending upward before it becomes a crisis. Sociology lens: lower-income patients deteriorate faster — structural barriers compound clinical risk.</div>
+      <div class="card"><h3>Population risk score — Q1 through Q4</h3><div class="cs">Mean panel risk by quarter and adherence cohort</div>
+        <div class="leg"><span><span class="lb" style="background:#E24B4A"></span>Non-adherent cohort</span><span><span class="lb" style="background:#378ADD;border:1px dashed #378ADD"></span>Adherent cohort</span></div>
+        <div style="position:relative;width:100%;height:200px"><canvas id="c-v2-long" role="img" aria-label="Risk score Q1 to Q4. Non-adherent rising 48 to 62. Adherent stable declining 32 to 29.">Non-adherent rising 48→62. Adherent stable 32→29.</canvas></div>
+      </div>
+      <div class="g2">
+        <div class="card"><h3>Deterioration rate by income quintile</h3><div class="cs">% patients with rising risk slope Q1→Q4</div>
+          <div style="position:relative;width:100%;height:200px"><canvas id="c-v2-sdoh" role="img" aria-label="Deterioration by income quintile. Q1:48%, Q2:38%, Q3:27%, Q4:18%, Q5:12%.">Q1:48% Q2:38% Q3:27% Q4:18% Q5:12%.</canvas></div>
+        </div>
+        <div class="card"><h3>HbA1c trend Q1 → Q4</h3><div class="cs">Adherent vs. non-adherent cohorts</div>
+          <div class="leg"><span><span class="lb" style="background:#E24B4A"></span>Non-adherent</span><span><span class="lb" style="background:#378ADD"></span>Adherent</span></div>
+          <div style="position:relative;width:100%;height:200px"><canvas id="c-v2-hba1c" role="img" aria-label="HbA1c Q1 to Q4. Non-adherent rising 8.1 to 9.1. Adherent improving 7.2 to 6.9.">Non-adherent 8.1→9.1. Adherent 7.2→6.9.</canvas></div>
+        </div>
+      </div>
+      <p class="footnote">Sociology finding: Q1 deterioration rate is 4× that of Q5, reflecting structural barriers beyond clinical factors alone.</p>
+    </div>
+
+    <div id="v2-roi" class="view">
+      <div class="callout callout-green">Wearable augmentation adds ~$52K gross benefit through earlier detection. Device costs are offset at scale. Equity ROI: closing the device access gap for Q1–Q2 high-risk patients is the highest-return single intervention.</div>
+      <div class="roi-grid">
+        <div class="rc"><div class="rl">Quality bonus</div><div class="rv" style="color:var(--green)">$175K</div><div class="rs">Same as static model</div></div>
+        <div class="rc"><div class="rl">Hospital cost avoided</div><div class="rv" style="color:var(--green)">$114K</div><div class="rs">~9.5 hospitalizations <span class="new-tag">+$42K</span></div></div>
+        <div class="rc"><div class="rl">ER cost avoided</div><div class="rv" style="color:var(--green)">$38K</div><div class="rs">~33 ER visits <span class="new-tag">+$10K</span></div></div>
+        <div class="rc"><div class="rl">Program cost</div><div class="rv" style="color:var(--red)">$150K</div><div class="rs">Outreach + device stipends</div></div>
+        <div class="rc"><div class="rl">Net annual benefit</div><div class="rv" style="color:var(--blue)">$177K</div><div class="rs">After all costs</div></div>
+        <div class="rc"><div class="rl">Detection lead time</div><div class="rv" style="color:var(--green)">7–14 d</div><div class="rs">Before clinical event</div></div>
+      </div>
+      <div class="g2">
+        <div class="card"><h3>Static vs. wearable — net value comparison</h3><div class="cs">Gross benefit, program cost, net annual benefit</div>
+          <div class="leg"><span><span class="lb" style="background:#85B7EB"></span>Static model</span><span><span class="lb" style="background:#378ADD"></span>Wearable model</span></div>
+          <div style="position:relative;width:100%;height:210px"><canvas id="c-v2-comp" role="img" aria-label="Comparison. Static gross $275K cost $54K net $221K. Wearable gross $327K cost $150K net $177K.">Static: gross $275K, cost $54K, net $221K. Wearable: gross $327K, cost $150K, net $177K.</canvas></div>
+        </div>
+        <div class="card"><h3>Equity ROI — close the device gap</h3><div class="cs">Value of enrolling high-risk Q1–Q2 patients in device program</div>
+          <div style="position:relative;width:100%;height:210px"><canvas id="c-v2-eq-roi" role="img" aria-label="Equity ROI. Device cost $4.5K, hospitalizations prevented $57K, net $52.5K.">Device cost $4.5K, hosp prevented $57K, net $52.5K.</canvas></div>
+        </div>
+      </div>
+      <p class="footnote">Sources: CMS 2024, AHRQ HCUP 2022, NEJM Catalyst, Advisory Board. Validate against organizational actuals.</p>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const built = {};
+const so = {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}};
+const gc = 'rgba(0,0,0,0.05)';
+const xt = {font:{size:11}};
+const yt = {font:{size:11}};
+
+function setEra(era) {
+  ['v1','v2'].forEach(e => {
+    document.getElementById(`era-${e}`).style.display = e===era?'block':'none';
+    document.getElementById(`btn-${e}`).classList.toggle('active', e===era);
+  });
+}
+
+function setSub(era, sub, btn) {
+  document.querySelectorAll(`#era-${era} .sub-btn`).forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll(`#era-${era} .view`).forEach(v=>v.classList.remove('active'));
+  document.getElementById(`${era}-${sub}`).classList.add('active');
+  const key = `${era}-${sub}`;
+  if (!built[key]) { buildCharts(era, sub); built[key]=true; }
+}
+
+function anim(id, end, sfx) {
+  const el = document.getElementById(id); if(!el) return;
+  let t=0; const dur=1100,step=16;
+  const iv = setInterval(()=>{
+    t+=step; const p=Math.min(t/dur,1),e=1-Math.pow(1-p,3);
+    el.textContent = Math.round(e*end)+(sfx||'');
+    if(p>=1) clearInterval(iv);
+  },step);
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  anim('v1-m1',312,''); document.getElementById('v1-m1a').textContent='→ 429 after outreach'; document.getElementById('v1-m1d').textContent='+117 closed (+37%)';
+  anim('v1-m2',58,'%'); document.getElementById('v1-m2a').textContent='→ 74% after'; document.getElementById('v1-m2d').textContent='+16pp improvement';
+  anim('v1-m3',28,''); document.getElementById('v1-m3a').textContent='→ 23/yr after'; document.getElementById('v1-m3d').textContent='-5 avoided (−18%)';
+  anim('v2-m1',312,''); document.getElementById('v2-m1a').textContent='→ 441 after outreach'; document.getElementById('v2-m1d').textContent='+129 closed (+41%)';
+  anim('v2-m2',58,'%'); document.getElementById('v2-m2a').textContent='→ 77% after'; document.getElementById('v2-m2d').textContent='+19pp improvement';
+  anim('v2-m3',28,''); document.getElementById('v2-m3a').textContent='→ 19/yr after'; document.getElementById('v2-m3d').textContent='-9 avoided (−32%)';
+  buildCharts('v1','overview'); built['v1-overview']=true;
+  buildWL('v1'); buildWL('v2'); buildEquity();
+});
+
+function buildCharts(era,sub) {
+  if(era==='v1') {
+    if(sub==='overview') {
+      mkBar('c-v1-pri',['Critical','High','Moderate','Routine'],[
+        {data:[12,140,434,214],bg:['#F09595','#FAC775','#C0DD97','#9FE1CB']},
+        {data:[3,48,310,439],bg:['#E24B4A','#EF9F27','#97C459','#5DCAA5']}
+      ]);
+      mkBar('c-v1-labs',['HbA1c','BP','LDL'],[
+        {data:[58,61,54],bg:'#85B7EB'},{data:[74,78,70],bg:'#378ADD'}
+      ],{y:{min:0,max:100,ticks:{callback:v=>v+'%',...yt},grid:{color:gc}}});
+      mkHBar('c-v1-gaps',['Wellness','HbA1c','BP','Eye exam','LDL','Colorectal','Flu'],[38,34,31,28,26,22,19],'#378ADD');
+      mkBar('c-v1-util',['ER visits','Hospitalizations'],[
+        {data:[85,28],bg:'#F09595'},{data:[60,23],bg:'#E24B4A'}
+      ]);
+    } else if(sub==='roi') {
+      mkWaterfall('c-v1-roi',['Quality','Hospital','ER','Program cost','Net'],[175,72,28,-54,221]);
+    }
+  } else {
+    if(sub==='overview') {
+      mkBar('c-v2-pri',['Critical','High','Moderate','Routine'],[
+        {data:[9,152,523,116],bg:['#F09595','#FAC775','#C0DD97','#9FE1CB']},
+        {data:[2,41,298,459],bg:['#E24B4A','#EF9F27','#97C459','#5DCAA5']}
+      ]);
+      mkBar('c-v2-eq-bar',['Q1','Q2','Q3','Q4','Q5'],[
+        {data:[38,52,67,79,88],bg:['#E24B4A','#EF9F27','#97C459','#5DCAA5','#378ADD']}
+      ],{y:{min:0,max:100,ticks:{callback:v=>v+'%',...yt},grid:{color:gc}}});
+      mkBar('c-v2-labs',['HbA1c','BP','LDL'],[
+        {data:[58,61,54],bg:'#85B7EB'},{data:[77,81,73],bg:'#378ADD'}
+      ],{y:{min:0,max:100,ticks:{callback:v=>v+'%',...yt},grid:{color:gc}}});
+      mkBar('c-v2-util',['ER visits','Hospitalizations'],[
+        {data:[60,23],bg:'#F09595'},{data:[51,19],bg:'#E24B4A'}
+      ]);
+    } else if(sub==='wearable') {
+      const days=Array.from({length:90},(_,i)=>i);
+      const adh=days.map(d=>Math.max(0,Math.round(7800+d*2+(Math.random()-.5)*350)));
+      const nad=days.map(d=>{let v=Math.round(6200-d*14+(Math.random()-.5)*450);if(d>=58&&d<=65)v=Math.round(v*.4);return Math.max(0,v);});
+      new Chart('c-v2-steps',{type:'line',data:{labels:days,datasets:[
+        {label:'Adherent',data:adh,borderColor:'#378ADD',pointRadius:0,tension:.4,borderWidth:1.5},
+        {label:'Non-adherent',data:nad,borderColor:'#E24B4A',pointRadius:0,tension:.3,borderWidth:1.5}
+      ]},options:{...so,scales:{x:{grid:{display:false},ticks:{maxTicksLimit:10,...xt}},y:{grid:{color:gc},ticks:yt}}}});
+      const tiers=[{l:'Critical',c:'#E24B4A',b:26,s:-.12},{l:'High',c:'#EF9F27',b:34,s:-.06},{l:'Moderate',c:'#97C459',b:40,s:.01},{l:'Routine',c:'#5DCAA5',b:46,s:.04}];
+      new Chart('c-v2-hrv',{type:'line',data:{labels:days,datasets:tiers.map(t=>({label:t.l,data:days.map(d=>Math.round(t.b+t.s*d+(Math.random()-.5)*2)),borderColor:t.c,pointRadius:0,tension:.4,borderWidth:1.8}))},options:{...so,scales:{x:{grid:{display:false},ticks:{maxTicksLimit:8,...xt}},y:{grid:{color:gc},ticks:yt}}}});
+    } else if(sub==='longitudinal') {
+      new Chart('c-v2-long',{type:'line',data:{labels:['Q1','Q2','Q3','Q4'],datasets:[
+        {label:'Non-adherent',data:[48,53,58,62],borderColor:'#E24B4A',pointRadius:4,tension:.3,borderWidth:2},
+        {label:'Adherent',data:[32,31,30,29],borderColor:'#378ADD',pointRadius:4,tension:.3,borderWidth:2,borderDash:[5,3]}
+      ]},options:{...so,scales:{x:{grid:{display:false},ticks:xt},y:{grid:{color:gc},ticks:yt}}}});
+      mkBar('c-v2-sdoh',['Q1','Q2','Q3','Q4','Q5'],[
+        {data:[48,38,27,18,12],bg:['#E24B4A','#EF9F27','#97C459','#5DCAA5','#378ADD']}
+      ],{y:{min:0,max:60,ticks:{callback:v=>v+'%',...yt},grid:{color:gc}}});
+      new Chart('c-v2-hba1c',{type:'line',data:{labels:['Q1','Q2','Q3','Q4'],datasets:[
+        {label:'Non-adherent',data:[8.1,8.4,8.8,9.1],borderColor:'#E24B4A',pointRadius:4,tension:.3,borderWidth:2},
+        {label:'Adherent',data:[7.2,7.1,7.0,6.9],borderColor:'#378ADD',pointRadius:4,tension:.3,borderWidth:2,borderDash:[5,3]}
+      ]},options:{...so,scales:{x:{grid:{display:false},ticks:xt},y:{grid:{color:gc},ticks:{...yt,callback:v=>v.toFixed(1)}}}}});
+    } else if(sub==='roi') {
+      mkBar('c-v2-comp',['Gross benefit','Program cost','Net benefit'],[
+        {data:[275,54,221],bg:'#85B7EB'},{data:[327,150,177],bg:'#378ADD'}
+      ],{y:{ticks:{callback:v=>'$'+v+'K',...yt},grid:{color:gc}}});
+      mkWaterfall('c-v2-eq-roi',['Device cost','Hosp. prevented','Net value'],[-4.5,57,52.5]);
+    }
+  }
+}
+
+function mkBar(id,labels,datasets,extraScales) {
+  new Chart(id,{type:'bar',data:{labels,datasets:datasets.map(d=>({label:d.label||'',data:d.data,backgroundColor:d.bg,borderRadius:3}))},
+    options:{...so,scales:{x:{grid:{display:false},ticks:xt},y:{grid:{color:gc},ticks:yt,...(extraScales&&extraScales.y?extraScales.y:{})}},...(extraScales&&extraScales.extra?extraScales.extra:{})}});
+}
+function mkHBar(id,labels,data,bg) {
+  new Chart(id,{type:'bar',data:{labels,datasets:[{data,backgroundColor:bg,borderRadius:3}]},
+    options:{...so,indexAxis:'y',scales:{x:{grid:{color:gc},ticks:xt},y:{grid:{display:false},ticks:xt}}}});
+}
+function mkWaterfall(id,labels,values) {
+  new Chart(id,{type:'bar',data:{labels,datasets:[{data:values,backgroundColor:values.map(v=>v<0?'#A32D2D':v===values[values.length-1]?'#185FA5':'#3B6D11'),borderRadius:4}]},
+    options:{...so,scales:{x:{grid:{display:false},ticks:xt},y:{grid:{color:gc},ticks:{callback:v=>(v<0?'-':'')+'$'+Math.abs(v)+'K',...yt}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>(ctx.raw<0?'-':'')+'$'+Math.abs(ctx.raw)+'K'}}}}});
+}
+
+function buildWL(era) {
+  const v1=[
+    {id:'PT-0065',dx:'Type 2 DM',g:7,d:312,r:1.00,t:'C',a:false},
+    {id:'PT-0525',dx:'Heart failure',g:8,d:287,r:1.00,t:'C',a:false},
+    {id:'PT-0578',dx:'CKD stage 3',g:6,d:401,r:1.00,t:'C',a:false},
+    {id:'PT-0176',dx:'Hypertension',g:9,d:198,r:0.99,t:'C',a:false},
+    {id:'PT-0755',dx:'Afib',g:8,d:522,r:0.99,t:'C',a:false},
+    {id:'PT-0312',dx:'Type 2 DM',g:6,d:245,r:0.97,t:'H',a:false},
+    {id:'PT-0089',dx:'COPD',g:5,d:189,r:0.94,t:'H',a:false},
+    {id:'PT-0441',dx:'CAD',g:7,d:367,r:0.92,t:'H',a:false},
+    {id:'PT-0203',dx:'Obesity+DM',g:5,d:156,r:0.89,t:'H',a:false},
+    {id:'PT-0567',dx:'Depression',g:6,d:278,r:0.87,t:'H',a:false},
+    {id:'PT-0122',dx:'Hyperlipidemia',g:4,d:134,r:0.83,t:'H',a:false},
+    {id:'PT-0388',dx:'COPD',g:5,d:201,r:0.81,t:'H',a:false},
+    {id:'PT-0614',dx:'CKD stage 2',g:4,d:167,r:0.78,t:'H',a:false},
+    {id:'PT-0271',dx:'Heart failure',g:3,d:143,r:0.74,t:'H',a:false},
+    {id:'PT-0495',dx:'Type 2 DM',g:4,d:188,r:0.71,t:'H',a:false},
+  ];
+  const v2=[
+    {id:'PT-0525',dx:'Heart failure',g:8,d:287,r:1.00,t:'C',a:true},
+    {id:'PT-0176',dx:'Hypertension',g:9,d:198,r:0.99,t:'C',a:true},
+    {id:'PT-0065',dx:'Type 2 DM',g:7,d:312,r:0.99,t:'C',a:false},
+    {id:'PT-0312',dx:'Type 2 DM',g:6,d:245,r:0.98,t:'C',a:true},
+    {id:'PT-0089',dx:'COPD',g:5,d:189,r:0.97,t:'C',a:true},
+    {id:'PT-0755',dx:'Afib',g:8,d:522,r:0.96,t:'H',a:false},
+    {id:'PT-0578',dx:'CKD stage 3',g:6,d:401,r:0.95,t:'H',a:false},
+    {id:'PT-0203',dx:'Obesity+DM',g:5,d:156,r:0.94,t:'H',a:true},
+    {id:'PT-0441',dx:'CAD',g:7,d:367,r:0.91,t:'H',a:false},
+    {id:'PT-0388',dx:'COPD',g:5,d:201,r:0.88,t:'H',a:false},
+    {id:'PT-0567',dx:'Depression',g:6,d:278,r:0.86,t:'H',a:false},
+    {id:'PT-0122',dx:'Hyperlipidemia',g:4,d:134,r:0.83,t:'H',a:false},
+    {id:'PT-0614',dx:'CKD stage 2',g:4,d:167,r:0.79,t:'H',a:false},
+    {id:'PT-0271',dx:'Heart failure',g:3,d:143,r:0.75,t:'H',a:true},
+    {id:'PT-0495',dx:'Type 2 DM',g:4,d:188,r:0.71,t:'H',a:false},
+  ];
+  const pts = era==='v1'?v1:v2;
+  const body = document.getElementById(`${era}-wl`);
+  const tc = {C:'#E24B4A',H:'#EF9F27'};
+  pts.forEach((p,i)=>{
+    const col=tc[p.t];
+    const dc=p.d>300?'#A32D2D':p.d>150?'#854F0B':'#6b6b68';
+    const bw=Math.round(p.r*100);
+    const anomHtml=(era==='v2'&&p.a)?'<span class="anom">alert</span>':'';
+    const row=document.createElement('div');
+    row.className='wl-grid';
+    row.innerHTML=`
+      <div><div class="wl-num" style="background:${col}18;color:${col}">${i+1}</div></div>
+      <div style="font-size:12px;font-weight:500;color:#111110">${p.id}${anomHtml}</div>
+      <div style="font-size:11px;color:#6b6b68">${p.dx}</div>
+      <div style="font-size:13px;font-weight:500">${p.g}</div>
+      <div style="font-size:11px;color:${dc}">${p.d}d</div>
+      <div><div class="rb"><div class="rf" style="width:${bw}%;background:${col}"></div></div>
+        <div style="font-size:10px;color:#9a9a96;margin-top:2px">${p.r.toFixed(2)}</div></div>
+      <div><span class="tp t${p.t}">${p.t==='C'?'Critical':'High'}</span></div>`;
+    body.appendChild(row);
+  });
+}
+
+function buildEquity() {
+  const data=[
+    {q:'Q1 (lowest)',own:38,comp:71},
+    {q:'Q2',own:52,comp:76},
+    {q:'Q3',own:67,comp:81},
+    {q:'Q4',own:79,comp:85},
+    {q:'Q5 (highest)',own:88,comp:88},
+  ];
+  const wrap=document.getElementById('eq-rows');
+  const hdr=document.createElement('div');
+  hdr.style.cssText='display:grid;grid-template-columns:95px 1fr 50px 55px;gap:8px;font-size:10px;color:#9a9a96;padding:4px 0 7px;border-bottom:0.5px solid rgba(0,0,0,0.09);margin-bottom:4px;font-weight:500';
+  hdr.innerHTML='<div>Quintile</div><div>Owns device</div><div>%</div><div>Complete</div>';
+  wrap.appendChild(hdr);
+  data.forEach(d=>{
+    const bc=d.own<50?'#E24B4A':d.own<70?'#EF9F27':'#3B6D11';
+    const row=document.createElement('div');
+    row.className='eq-row';
+    row.innerHTML=`
+      <div style="font-size:12px;color:#111110">${d.q}</div>
+      <div class="eq-track"><div class="eq-fill" style="width:${d.own}%;background:${bc}"></div></div>
+      <div style="font-size:12px;font-weight:500;color:${bc}">${d.own}%</div>
+      <div style="font-size:12px;color:#6b6b68">${d.comp}%</div>`;
+    wrap.appendChild(row);
+  });
+}
+</script>
+</body>
+</html>

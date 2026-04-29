@@ -75,8 +75,8 @@ nav{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 2rem;
 .leg span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2)}
 .lb{width:10px;height:10px;border-radius:2px;flex-shrink:0}
 
-.view{display:none}
-.view.active{display:block}
+.view{visibility:hidden;height:0;overflow:hidden;pointer-events:none}
+.view.active{visibility:visible;height:auto;overflow:visible;pointer-events:auto}
 
 .wl-grid{display:grid;grid-template-columns:30px 1fr 80px 50px 65px 110px 85px;gap:8px;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border);font-size:12px}
 .wl-grid:last-child{border-bottom:none}
@@ -207,7 +207,7 @@ nav{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 2rem;
   </div>
 
   <!-- ── V2 ── -->
-  <div id="era-v2" style="display:none">
+  <div id="era-v2" style="visibility:hidden;height:0;overflow:hidden">
     <div class="sub-nav">
       <button class="sub-btn active" onclick="setSub('v2','overview',this)">Panel overview</button>
       <button class="sub-btn" onclick="setSub('v2','worklist',this)">Weekly worklist</button>
@@ -326,7 +326,10 @@ const yt = {font:{size:11}};
 
 function setEra(era) {
   ['v1','v2'].forEach(e => {
-    document.getElementById(`era-${e}`).style.display = e===era?'block':'none';
+    const el = document.getElementById(`era-${e}`);
+    el.style.visibility = e===era ? 'visible' : 'hidden';
+    el.style.height = e===era ? 'auto' : '0';
+    el.style.overflow = e===era ? 'visible' : 'hidden';
     document.getElementById(`btn-${e}`).classList.toggle('active', e===era);
   });
 }
@@ -358,6 +361,11 @@ window.addEventListener('DOMContentLoaded',()=>{
   anim('v2-m2',58,'%'); document.getElementById('v2-m2a').textContent='→ 77% after'; document.getElementById('v2-m2d').textContent='+19pp improvement';
   anim('v2-m3',28,''); document.getElementById('v2-m3a').textContent='→ 19/yr after'; document.getElementById('v2-m3d').textContent='-9 avoided (−32%)';
   buildCharts('v1','overview'); built['v1-overview']=true;
+  buildCharts('v1','roi');      built['v1-roi']=true;
+  buildCharts('v2','overview'); built['v2-overview']=true;
+  buildCharts('v2','wearable'); built['v2-wearable']=true;
+  buildCharts('v2','longitudinal'); built['v2-longitudinal']=true;
+  buildCharts('v2','roi');      built['v2-roi']=true;
   buildWL('v1'); buildWL('v2'); buildEquity();
 });
 

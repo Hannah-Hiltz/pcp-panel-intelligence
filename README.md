@@ -10,7 +10,7 @@
 
 A wearable-augmented risk stratification system for Medicare Advantage panel management — combining CMS-calibrated clinical data, continuous wearable time series, and longitudinal quarterly tracking to surface the patients who need proactive outreach before an acute event forces the issue.
 
-[![Live Dashboard - V1 vs. V2](https://img.shields.io/badge/▶_Live_Demo-V1_vs_V2_Evolution-639922?style=for-the-badge)](https://hannah-hiltz.github.io/pcp-panel-intelligence/docs/pcp-panel-evolution.html)
+[![Live Dashboard - Model Evolution](https://img.shields.io/badge/▶_Live_Demo-V1_vs_V2_Evolution-639922?style=for-the-badge)](https://hannah-hiltz.github.io/pcp-panel-intelligence/pcp-panel-evolution.html)
 
 ---
 

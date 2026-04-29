@@ -207,7 +207,7 @@ nav{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 2rem;
   </div>
 
   <!-- ── V2 ── -->
-  <div id="era-v2" style="visibility:hidden;height:0;overflow:hidden">
+  <div id="era-v2" style="display:none">
     <div class="sub-nav">
       <button class="sub-btn active" onclick="setSub('v2','overview',this)">Panel overview</button>
       <button class="sub-btn" onclick="setSub('v2','worklist',this)">Weekly worklist</button>
@@ -319,6 +319,7 @@ nav{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 2rem;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 const built = {};
+const chartInstances = {};
 const so = {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}};
 const gc = 'rgba(0,0,0,0.05)';
 const xt = {font:{size:11}};
@@ -327,20 +328,39 @@ const yt = {font:{size:11}};
 function setEra(era) {
   ['v1','v2'].forEach(e => {
     const el = document.getElementById(`era-${e}`);
-    el.style.visibility = e===era ? 'visible' : 'hidden';
-    el.style.height = e===era ? 'auto' : '0';
-    el.style.overflow = e===era ? 'visible' : 'hidden';
+    el.style.display = e===era ? 'block' : 'none';
     document.getElementById(`btn-${e}`).classList.toggle('active', e===era);
   });
+  const activeBtn = document.querySelector(`#era-${era} .sub-btn.active`);
+  const activeSub = activeBtn ? activeBtn.getAttribute('data-sub') : null;
+  if(activeSub) setTimeout(()=>rebuildCharts(era, activeSub), 50);
 }
 
 function setSub(era, sub, btn) {
   document.querySelectorAll(`#era-${era} .sub-btn`).forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  btn.setAttribute('data-sub', sub);
   document.querySelectorAll(`#era-${era} .view`).forEach(v=>v.classList.remove('active'));
   document.getElementById(`${era}-${sub}`).classList.add('active');
+  setTimeout(()=>rebuildCharts(era, sub), 50);
+}
+
+function rebuildCharts(era, sub) {
   const key = `${era}-${sub}`;
-  if (!built[key]) { buildCharts(era, sub); built[key]=true; }
+  const canvases = document.querySelectorAll(`#${era}-${sub} canvas`);
+  canvases.forEach(c => {
+    if(chartInstances[c.id]) { chartInstances[c.id].destroy(); delete chartInstances[c.id]; }
+  });
+  delete built[key];
+  buildCharts(era, sub);
+  built[key] = true;
+}
+
+function mkChartInstance(id, config) {
+  if(chartInstances[id]) { chartInstances[id].destroy(); }
+  const chart = new Chart(id, config);
+  chartInstances[id] = chart;
+  return chart;
 }
 
 function anim(id, end, sfx) {
@@ -360,12 +380,8 @@ window.addEventListener('DOMContentLoaded',()=>{
   anim('v2-m1',312,''); document.getElementById('v2-m1a').textContent='→ 441 after outreach'; document.getElementById('v2-m1d').textContent='+129 closed (+41%)';
   anim('v2-m2',58,'%'); document.getElementById('v2-m2a').textContent='→ 77% after'; document.getElementById('v2-m2d').textContent='+19pp improvement';
   anim('v2-m3',28,''); document.getElementById('v2-m3a').textContent='→ 19/yr after'; document.getElementById('v2-m3d').textContent='-9 avoided (−32%)';
-  buildCharts('v1','overview'); built['v1-overview']=true;
-  buildCharts('v1','roi');      built['v1-roi']=true;
-  buildCharts('v2','overview'); built['v2-overview']=true;
-  buildCharts('v2','wearable'); built['v2-wearable']=true;
-  buildCharts('v2','longitudinal'); built['v2-longitudinal']=true;
-  buildCharts('v2','roi');      built['v2-roi']=true;
+  document.querySelectorAll('.sub-btn').forEach(b => { if(b.classList.contains('active')) b.setAttribute('data-sub', b.getAttribute('onclick').match(/'([^']+)'/g)[1].replace(/'/g,'')); });
+  setTimeout(()=>{ rebuildCharts('v1','overview'); }, 100);
   buildWL('v1'); buildWL('v2'); buildEquity();
 });
 
@@ -405,21 +421,21 @@ function buildCharts(era,sub) {
       const days=Array.from({length:90},(_,i)=>i);
       const adh=days.map(d=>Math.max(0,Math.round(7800+d*2+(Math.random()-.5)*350)));
       const nad=days.map(d=>{let v=Math.round(6200-d*14+(Math.random()-.5)*450);if(d>=58&&d<=65)v=Math.round(v*.4);return Math.max(0,v);});
-      new Chart('c-v2-steps',{type:'line',data:{labels:days,datasets:[
+      mkChartInstance('c-v2-steps',{type:'line',data:{labels:days,datasets:[
         {label:'Adherent',data:adh,borderColor:'#378ADD',pointRadius:0,tension:.4,borderWidth:1.5},
         {label:'Non-adherent',data:nad,borderColor:'#E24B4A',pointRadius:0,tension:.3,borderWidth:1.5}
       ]},options:{...so,scales:{x:{grid:{display:false},ticks:{maxTicksLimit:10,...xt}},y:{grid:{color:gc},ticks:yt}}}});
       const tiers=[{l:'Critical',c:'#E24B4A',b:26,s:-.12},{l:'High',c:'#EF9F27',b:34,s:-.06},{l:'Moderate',c:'#97C459',b:40,s:.01},{l:'Routine',c:'#5DCAA5',b:46,s:.04}];
-      new Chart('c-v2-hrv',{type:'line',data:{labels:days,datasets:tiers.map(t=>({label:t.l,data:days.map(d=>Math.round(t.b+t.s*d+(Math.random()-.5)*2)),borderColor:t.c,pointRadius:0,tension:.4,borderWidth:1.8}))},options:{...so,scales:{x:{grid:{display:false},ticks:{maxTicksLimit:8,...xt}},y:{grid:{color:gc},ticks:yt}}}});
+      mkChartInstance('c-v2-hrv',{type:'line',data:{labels:days,datasets:tiers.map(t=>({label:t.l,data:days.map(d=>Math.round(t.b+t.s*d+(Math.random()-.5)*2)),borderColor:t.c,pointRadius:0,tension:.4,borderWidth:1.8}))},options:{...so,scales:{x:{grid:{display:false},ticks:{maxTicksLimit:8,...xt}},y:{grid:{color:gc},ticks:yt}}}});
     } else if(sub==='longitudinal') {
-      new Chart('c-v2-long',{type:'line',data:{labels:['Q1','Q2','Q3','Q4'],datasets:[
+      mkChartInstance('c-v2-long',{type:'line',data:{labels:['Q1','Q2','Q3','Q4'],datasets:[
         {label:'Non-adherent',data:[48,53,58,62],borderColor:'#E24B4A',pointRadius:4,tension:.3,borderWidth:2},
         {label:'Adherent',data:[32,31,30,29],borderColor:'#378ADD',pointRadius:4,tension:.3,borderWidth:2,borderDash:[5,3]}
       ]},options:{...so,scales:{x:{grid:{display:false},ticks:xt},y:{grid:{color:gc},ticks:yt}}}});
       mkBar('c-v2-sdoh',['Q1','Q2','Q3','Q4','Q5'],[
         {data:[48,38,27,18,12],bg:['#E24B4A','#EF9F27','#97C459','#5DCAA5','#378ADD']}
       ],{y:{min:0,max:60,ticks:{callback:v=>v+'%',...yt},grid:{color:gc}}});
-      new Chart('c-v2-hba1c',{type:'line',data:{labels:['Q1','Q2','Q3','Q4'],datasets:[
+      mkChartInstance('c-v2-hba1c',{type:'line',data:{labels:['Q1','Q2','Q3','Q4'],datasets:[
         {label:'Non-adherent',data:[8.1,8.4,8.8,9.1],borderColor:'#E24B4A',pointRadius:4,tension:.3,borderWidth:2},
         {label:'Adherent',data:[7.2,7.1,7.0,6.9],borderColor:'#378ADD',pointRadius:4,tension:.3,borderWidth:2,borderDash:[5,3]}
       ]},options:{...so,scales:{x:{grid:{display:false},ticks:xt},y:{grid:{color:gc},ticks:{...yt,callback:v=>v.toFixed(1)}}}}});
@@ -433,15 +449,15 @@ function buildCharts(era,sub) {
 }
 
 function mkBar(id,labels,datasets,extraScales) {
-  new Chart(id,{type:'bar',data:{labels,datasets:datasets.map(d=>({label:d.label||'',data:d.data,backgroundColor:d.bg,borderRadius:3}))},
+  mkChartInstance(id,{type:'bar',data:{labels,datasets:datasets.map(d=>({label:d.label||'',data:d.data,backgroundColor:d.bg,borderRadius:3}))},
     options:{...so,scales:{x:{grid:{display:false},ticks:xt},y:{grid:{color:gc},ticks:yt,...(extraScales&&extraScales.y?extraScales.y:{})}},...(extraScales&&extraScales.extra?extraScales.extra:{})}});
 }
 function mkHBar(id,labels,data,bg) {
-  new Chart(id,{type:'bar',data:{labels,datasets:[{data,backgroundColor:bg,borderRadius:3}]},
+  mkChartInstance(id,{type:'bar',data:{labels,datasets:[{data,backgroundColor:bg,borderRadius:3}]},
     options:{...so,indexAxis:'y',scales:{x:{grid:{color:gc},ticks:xt},y:{grid:{display:false},ticks:xt}}}});
 }
 function mkWaterfall(id,labels,values) {
-  new Chart(id,{type:'bar',data:{labels,datasets:[{data:values,backgroundColor:values.map(v=>v<0?'#A32D2D':v===values[values.length-1]?'#185FA5':'#3B6D11'),borderRadius:4}]},
+  mkChartInstance(id,{type:'bar',data:{labels,datasets:[{data:values,backgroundColor:values.map(v=>v<0?'#A32D2D':v===values[values.length-1]?'#185FA5':'#3B6D11'),borderRadius:4}]},
     options:{...so,scales:{x:{grid:{display:false},ticks:xt},y:{grid:{color:gc},ticks:{callback:v=>(v<0?'-':'')+'$'+Math.abs(v)+'K',...yt}}},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>(ctx.raw<0?'-':'')+'$'+Math.abs(ctx.raw)+'K'}}}}});
 }
